@@ -1,0 +1,2 @@
+com.redhat.insights.extension.approval.notifications.impl.email.CompleteUserTaskHandler
+com.redhat.insights.extension.approval.notifications.impl.email.StartProcessHandler

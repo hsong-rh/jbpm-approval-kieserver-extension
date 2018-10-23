@@ -1,0 +1,9 @@
+*.sln
+*.suo
+*.swp
+.classpath
+.DS_Store
+.settings/
+.project
+.tags
+target/
