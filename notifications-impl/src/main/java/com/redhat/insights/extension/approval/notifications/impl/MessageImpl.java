@@ -10,7 +10,7 @@ public class MessageImpl implements Message, Serializable {
 
 	private static final long serialVersionUID = -3376021115090253105L;
 	
-    private String messageId;
+//    private String messageId;
 	
 	private String template;
 	
@@ -26,20 +26,24 @@ public class MessageImpl implements Message, Serializable {
 	
 	private Map<String, Object> data;
 	
-	private String sourceMessageId;
+//	private String sourceMessageId;
+	
+	private long processInstanceId;
+	
+	private String signalReference;
 
     public MessageImpl() {
         this.contentType = "text/plain";
     }
 
-	@Override
-	public String getMessageId() {
-		return messageId;
-	}
-	
-	public void setMessageId(String messageId) {
-		this.messageId = messageId;
-	}
+//	@Override
+//	public String getMessageId() {
+//		return messageId;
+//	}
+//	
+//	public void setMessageId(String messageId) {
+//		this.messageId = messageId;
+//	}
 
 	@Override
 	public String getTemplate() {
@@ -104,18 +108,37 @@ public class MessageImpl implements Message, Serializable {
 		this.data = data;
 	}
 
-	@Override
-	public String getSourceMessageId() {
-		return sourceMessageId;
-	}
-
-    public void setSourceMessageId(String sourceMessageId) {
-        this.sourceMessageId = sourceMessageId;
-    }	
+//	@Override
+//	public String getSourceMessageId() {
+//		return sourceMessageId;
+//	}
+//
+//    public void setSourceMessageId(String sourceMessageId) {
+//        this.sourceMessageId = sourceMessageId;
+//    }	
     
 	@Override
+	public long getProcessInstanceId() {
+		return processInstanceId;
+	}
+
+	public void setProcessInstanceId(long processInstanceId) {
+		this.processInstanceId = processInstanceId;
+	}
+
+	@Override
+	public String getSignalReference() {
+		return signalReference;
+	}
+
+	public void setSignalReference(String signalReference) {
+		this.signalReference = signalReference;
+	}
+	
+	@Override
 	public String toString() {
-		return "MessageImpl [messageId=" + messageId + ", sender=" + sender + ", recipients=" + recipients
-				+ ", subject=" + subject + ", content=" + content + ", data=" + data + "]";
+		return "MessageImpl [sender=" + sender + ", recipients=" + recipients
+				+ ", subject=" + subject + ", content=" + content + ", data=" + data 
+				+ ", processInstanceId =" + processInstanceId + ", signalReference=" + signalReference + "]";
 	}
 }

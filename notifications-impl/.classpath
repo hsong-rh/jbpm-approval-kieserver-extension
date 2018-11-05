@@ -27,5 +27,57 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-compiler-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-core-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-decisiontables-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-persistence-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-persistence-jpa-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-rhq-plugin-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-scorecards-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/drools-templates-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-audit-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-bpmn2-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-case-mgmt-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-case-mgmt-impl-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-document-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-executor-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-executor-cdi-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-executor-ejb-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-flow-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-flow-builder-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-human-task-audit-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-human-task-core-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-human-task-jpa-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-human-task-workitems-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-kie-services-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-persistence-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-persistence-jpa-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-query-jpa-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-runtime-manager-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-cdi-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-ejb-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-ejb-client-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-ejb-impl-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-services-ejb-timer-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-shared-services-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-test-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-bpmn2-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-core-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-email-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-jms-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-rest-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/jbpm-workitems-webservice-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-aries-blueprint-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-ci-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-internal-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-karaf-features-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-pmml-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-server-api-7.10.0.Final.jar" sourcepath="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-server-api-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-server-client-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-server-common-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-server-router-proxy-7.10.0.Final.jar"/>
+	<classpathentry kind="lib" path="/Users/hsong/work/jbpm-installer-7.10.0.Final/runtime/kie-spring-7.10.0.Final.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

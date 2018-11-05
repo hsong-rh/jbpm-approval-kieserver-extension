@@ -33,6 +33,13 @@
         <scope>import</scope>
       </dependency>
       <dependency>
+        <groupId>org.jbpm</groupId>
+        <artifactId>jbpm-services-api</artifactId>
+        <type>pom</type>
+        <version>${jbpm.version}</version>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
         <groupId>com.redhat.insights.extension.approval</groupId>
         <artifactId>notifications-impl</artifactId>
         <version>${app.version}</version>

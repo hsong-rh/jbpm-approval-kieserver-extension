@@ -53,6 +53,9 @@ public class NotificationExtension implements KieServerExtension {
 
 	@Override
 	public void createContainer(String id, KieContainerInstance kieContainerInstance, Map<String, Object> parameters) {
+		
+		logger.info("APPROVAL: createContainer id {} is input", id);
+		logger.info("APPROVAL: createContainer id {} is called", kieContainerInstance.getContainerId());
 		KieModuleMetaData metaData = (KieModuleMetaData) parameters.get(KieServerConstants.KIE_SERVER_PARAM_MODULE_METADATA);
 
 		ClassLoader classloader = metaData.getClassLoader().getParent();
@@ -69,7 +72,7 @@ public class NotificationExtension implements KieServerExtension {
 			Reflections reflections = new Reflections(builder);
 
 			Set<String> foundResources = reflections.getResources(Pattern.compile(".*" + RESOURCE_TYPE));
-			logger.debug("Found following templates {}", foundResources);
+			logger.info(NotificationService.LOG_PREFIX+"Found following templates {}", foundResources);
 
 			Set<String> registeredTemplates = new HashSet<>();
 			knownTemplates.put(id, registeredTemplates);
@@ -80,37 +83,39 @@ public class NotificationExtension implements KieServerExtension {
 					String templateId = Paths.get(filePath).getFileName().toString();
 					String templateContent = Helper.read(in);
 
+					logger.info(NotificationService.LOG_PREFIX+"Template id: {}; template content: {}", templateId, templateContent);
 					templateService.registerTemplate(templateId.replaceFirst(RESOURCE_TYPE, ""), templateContent);
 					registeredTemplates.add(templateId);
 				} else {
-					logger.warn("Cannot load template from path {}", filePath);
+					logger.warn(NotificationService.LOG_PREFIX+"Cannot load template from path {}", filePath);
 				}
 			});
 		}
 		
-		
+/*		
 		try {
             Properties emailServiceConfiguration = new Properties();
             emailServiceConfiguration.load(kieContainerInstance.getKieContainer().getClassLoader().getResourceAsStream("kjar-email-service.properties"));
             
+            logger.info(NotificationService.LOG_PREFIX+"EmailServiceConfiguration: {}", emailServiceConfiguration);
             EmailNotificationService kjarNotificationService = new EmailNotificationService(emailServiceConfiguration);
             List<ReceivedMessageHandler> callbacks = new ArrayList<>();
             collectCallbacks(kieContainerInstance.getKieContainer().getClassLoader(), callbacks);
             kjarNotificationService.start(callbacks.toArray(new ReceivedMessageHandler[callbacks.size()]));
             
             notificationServicePerContainer.put(id, kjarNotificationService);
-            logger.info("Email watcher started for container {}", id);
+            logger.info(NotificationService.LOG_PREFIX+"Email watcher started for container {}", id);
         } catch (Exception e) {
-            logger.info("No notification service configuration present in container {}, email watcher not started for container {}", id, id);
+            logger.info(NotificationService.LOG_PREFIX+"No notification service configuration present in container {}, email watcher not started for container {}", id, id);
         }	
-		
+*/		
 	}
 
 	@Override
 	public void destroy(KieServerImpl kieServer, KieServerRegistry registry) {
 		if (this.notificationService != null) {
     	    this.notificationService.stop();
-    		logger.info("Email watcher stopped for server {}", KieServerEnvironment.getServerId());
+    		logger.info(NotificationService.LOG_PREFIX+"Email watcher stopped for server {}", KieServerEnvironment.getServerId());
 		}
 	}
 
@@ -119,7 +124,7 @@ public class NotificationExtension implements KieServerExtension {
 	    NotificationService kjarNotificationService = notificationServicePerContainer.remove(id);
 	    if (kjarNotificationService != null) {
 	        kjarNotificationService.stop();
-	        logger.info("Email watcher stopped for container {}", id);
+	        logger.info(NotificationService.LOG_PREFIX+"Email watcher stopped for container {}", id);
 	    }
 	    
 	    knownTemplates.get(id).forEach(templateId -> {
@@ -158,12 +163,14 @@ public class NotificationExtension implements KieServerExtension {
 
 	@Override
 	public void init(KieServerImpl kieServer, KieServerRegistry registry) {
+		logger.info("APPROVAL: init is called");
         KieServerExtension jbpmExtension = registry.getServerExtension("jBPM");
         if (jbpmExtension == null) {
             initialized = false;
-            logger.warn("jBPM extension not found, jBPM Notifications cannot work without jBPM extension, disabling itself");
+            logger.warn(NotificationService.LOG_PREFIX+"jBPM extension not found, jBPM Notifications cannot work without jBPM extension, disabling itself");
             return;
         }
+        
         String defaultTemplate = Helper.read(this.getClass().getResourceAsStream("/default-email.ftl"));
         templateService.registerTemplate(DEFULT_TEMPLATE_NAME, defaultTemplate);
 
@@ -175,7 +182,7 @@ public class NotificationExtension implements KieServerExtension {
             
             
         } catch (Exception e) {
-            logger.info("No global notification service configuration present, email watcher not started");
+            logger.info(NotificationService.LOG_PREFIX+"No global notification service configuration present, email watcher not started");
         }
 
         this.initialized = true;
@@ -213,7 +220,7 @@ public class NotificationExtension implements KieServerExtension {
             List<ReceivedMessageHandler> callbacks = new ArrayList<>();
             collectCallbacks(this.getClass().getClassLoader(), callbacks);
             this.notificationService.start(callbacks.toArray(new ReceivedMessageHandler[callbacks.size()]));
-            logger.info("Email watcher started for server {}", KieServerEnvironment.getServerId());
+            logger.info(NotificationService.LOG_PREFIX+"Email watcher started for server {}", KieServerEnvironment.getServerId());
         }        
     }
     

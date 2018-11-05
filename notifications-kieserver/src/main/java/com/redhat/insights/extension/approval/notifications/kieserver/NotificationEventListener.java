@@ -8,6 +8,8 @@ import org.kie.server.services.impl.KieServerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.redhat.insights.extension.approval.notifications.NotificationService;
+
 public class NotificationEventListener implements KieServerEventListener {
 	private static final Logger logger = LoggerFactory.getLogger(NotificationEventListener.class);
 
@@ -26,7 +28,7 @@ public class NotificationEventListener implements KieServerEventListener {
 	@Override
 	public void afterServerStarted(KieServer kieServer) {
         KieServerExtension notificationExtension = ((KieServerImpl)kieServer).getServerRegistry().getServerExtension(NotificationExtension.EXTENSION_NAME);
-        logger.debug("Extension: {}", notificationExtension);
+        logger.debug(NotificationService.LOG_PREFIX+"Extension: {}", notificationExtension);
         ((NotificationExtension) notificationExtension).startNotificationService();
 	}
 

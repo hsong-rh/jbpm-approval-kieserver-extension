@@ -3,10 +3,13 @@ package com.redhat.insights.extension.approval.notifications.impl.email;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Map.Entry;
@@ -38,6 +41,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.jbpm.document.Document;
+import org.jbpm.services.api.ProcessService;
 import org.jbpm.services.api.service.ServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,125 +59,134 @@ public class EmailNotificationService implements NotificationService {
 	private static final String SERVICE_NAME = "EmailNotificationService";
 	private static final Logger logger = LoggerFactory.getLogger(EmailNotificationService.class);
 
-    private Properties emailServiceConfiguration;    
-    private ScheduledExecutorService keepAlive = Executors.newScheduledThreadPool(1);
-    private static final int KEEP_ALIVE_FREQ = Integer.parseInt(System.getProperty("org.jbpm.notifications.keepalive.interval", "10"));
+	private Properties emailServiceConfiguration;
+	private ScheduledExecutorService keepAlive = Executors.newScheduledThreadPool(1);
+	private static final int KEEP_ALIVE_FREQ = Integer
+			.parseInt(System.getProperty("org.jbpm.notifications.keepalive.interval", "10"));
 
-    private ExecutorService es;
-    private boolean executorServiceManaged = false;
+	private ExecutorService es;
+	private boolean executorServiceManaged = false;
 
-    private List<MessageExtractor> messageExtractors = new ArrayList<>();
+	private List<MessageExtractor> messageExtractors = new ArrayList<>();
 
-    private Store store;
-    private Folder folder;
+	private Store store;
+	private Folder folder;
 
-    private IdleManager idleManager;
+	private IdleManager idleManager;
 
-    private List<ReceivedMessageHandler> callbacks = new CopyOnWriteArrayList<>();
+	private List<ReceivedMessageHandler> callbacks = new CopyOnWriteArrayList<>();
 
-    public EmailNotificationService(Properties emailServiceConfiguration) {
-        this.emailServiceConfiguration = emailServiceConfiguration;
+	public EmailNotificationService(Properties emailServiceConfiguration) {
+		this.emailServiceConfiguration = emailServiceConfiguration;
 
-    }
-    
+	}
+
 	@Override
 	public void start(ReceivedMessageHandler... callback) {
-        try {
-            try {
-                this.es = InitialContext.doLookup("java:comp/DefaultManagedExecutorService");
-                this.executorServiceManaged = true;
-            } catch (Exception e) {
-                this.es = Executors.newCachedThreadPool();
-            }
-            parseAdditionalCallbacks();
-            this.callbacks.addAll(Arrays.asList(callback));
-            logger.debug(LOG_PREFIX+"Email notification service starting with callbacks {}", this.callbacks);
+		try {
+			try {
+				this.es = InitialContext.doLookup("java:comp/DefaultManagedExecutorService");
+				this.executorServiceManaged = true;
+			} catch (Exception e) {
+				this.es = Executors.newCachedThreadPool();
+			}
+			parseAdditionalCallbacks();
+			this.callbacks.addAll(Arrays.asList(callback));
+			logger.info(LOG_PREFIX + "Email notification service starting with callbacks {}", this.callbacks);
 
-            ServiceLoader<MessageExtractor> loaded = ServiceLoader.load(MessageExtractor.class);
-            loaded.forEach(me -> messageExtractors.add(me));
+			ServiceLoader<MessageExtractor> loaded = ServiceLoader.load(MessageExtractor.class);
+			loaded.forEach(me -> messageExtractors.add(me));
 
-            parseAdditionalMessageExtractors();
+			parseAdditionalMessageExtractors();
 
-            Collections.sort(messageExtractors, new Comparator<MessageExtractor>() {
+			Collections.sort(messageExtractors, new Comparator<MessageExtractor>() {
 
-                @Override
-                public int compare(MessageExtractor o1, MessageExtractor o2) {
-                    return o1.getPriority().compareTo(o2.getPriority());
-                }
+				@Override
+				public int compare(MessageExtractor o1, MessageExtractor o2) {
+					return o1.getPriority().compareTo(o2.getPriority());
+				}
 
-            });
-            logger.info(LOG_PREFIX+"Discovered message extractors {}", messageExtractors);
-            Session session = getSession();
+			});
+			logger.info(LOG_PREFIX + "Discovered message extractors {}", messageExtractors);
 
-            store = session.getStore("imaps");
-            store.connect(emailServiceConfiguration.getProperty("host"),
-                          Integer.parseInt(emailServiceConfiguration.getProperty("port")),
-                          emailServiceConfiguration.getProperty("username"),
-                          emailServiceConfiguration.getProperty("password"));
+			Session session = getSession();
 
-            folder = store.getFolder(emailServiceConfiguration.getProperty("inbox.folder"));
-            folder.open(Folder.READ_WRITE);
-            folder.addMessageCountListener(new MessageCountAdapter() {
+			store = session.getStore("imaps");
+			logger.info(LOG_PREFIX + "host: {}", emailServiceConfiguration.getProperty("host"));
+			logger.info(LOG_PREFIX + "port: {}", Integer.parseInt(emailServiceConfiguration.getProperty("port")));
+			logger.info(LOG_PREFIX + "user: {}", emailServiceConfiguration.getProperty("username"));
+			logger.info(LOG_PREFIX + "pwd: {}", emailServiceConfiguration.getProperty("password"));
 
-                @Override
-                public void messagesRemoved(MessageCountEvent event) {
-                    try {
-                        idleManager.watch(folder);
-                    } catch (Exception e) {
-                        logger.error(LOG_PREFIX+"Error when setting email watcher", e);
-                    }
-                }
+			store.connect(emailServiceConfiguration.getProperty("host"),
+					Integer.parseInt(emailServiceConfiguration.getProperty("port")),
+					emailServiceConfiguration.getProperty("username"),
+					emailServiceConfiguration.getProperty("password"));
 
-                @Override
-                public void messagesAdded(MessageCountEvent event) {
+			folder = store.getFolder(emailServiceConfiguration.getProperty("inbox.folder"));
+			folder.open(Folder.READ_WRITE);
+			folder.addMessageCountListener(new MessageCountAdapter() {
 
-                    javax.mail.Message[] messages = event.getMessages();
-                    try {
-                        for (javax.mail.Message message : messages) {
-                            processMessage(message);
-                        }
-                    } catch (Exception e) {
-                        logger.error(LOG_PREFIX+"When processing received messages", e);
-                    } finally {
-                        // regardless of the processing always re-watch on folder
-                        try {
-                            idleManager.watch(folder);
-                        } catch (Exception e) {
-                            logger.error(LOG_PREFIX+"Error when setting email watcher", e);
-                        }
-                    }
-                }
+				@Override
+				public void messagesRemoved(MessageCountEvent event) {
+					try {
+						idleManager.watch(folder);
+					} catch (Exception e) {
+						logger.error(LOG_PREFIX + "Error when setting email watcher", e);
+					}
+				}
 
-            });            
+				@Override
+				public void messagesAdded(MessageCountEvent event) {
 
-            ServiceRegistry.get().register(SERVICE_NAME, this);
-            
-            Flags seen = new Flags(Flags.Flag.SEEN);
-            FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
-            javax.mail.Message[] unreadMessages = folder.search(unseenFlagTerm);
-            logger.info(LOG_PREFIX+"Search for unread messages with result {}", unreadMessages.length);
-            
-            for (javax.mail.Message msg : unreadMessages) {
-                processMessage(msg);
-            }
-            
-            idleManager = new IdleManager(session, es);
-            idleManager.watch(folder);
-            keepAlive.scheduleAtFixedRate(() -> keepAliveRunner(),
-                                          KEEP_ALIVE_FREQ,
-                                          KEEP_ALIVE_FREQ,
-                                          TimeUnit.MINUTES);
-            logger.info(LOG_PREFIX+"Email notification service started successfully at {}", new Date());
-            
-        } catch (Exception e) {
-            logger.error(LOG_PREFIX+"Email notification service failed to start", e);
-        }
-		
+					javax.mail.Message[] messages = event.getMessages();
+					try {
+						for (javax.mail.Message message : messages) {
+							processMessage(message);
+						}
+					} catch (Exception e) {
+						logger.error(LOG_PREFIX + "When processing received messages", e);
+					} finally {
+						// regardless of the processing always re-watch on
+						// folder
+						try {
+							idleManager.watch(folder);
+						} catch (Exception e) {
+							logger.error(LOG_PREFIX + "Error when setting email watcher", e);
+						}
+					}
+				}
+
+			});
+
+			ServiceRegistry.get().register(SERVICE_NAME, this);
+
+			Flags seen = new Flags(Flags.Flag.SEEN);
+			FlagTerm unseenFlagTerm = new FlagTerm(seen, false);
+			javax.mail.Message[] unreadMessages = folder.search(unseenFlagTerm);
+			logger.info(LOG_PREFIX + "Search for unread messages with result {}", unreadMessages.length);
+
+			/*
+			 * TODO: waiting for email to send signal event
+			 */
+			/*
+			 * for (javax.mail.Message msg : unreadMessages) {
+			 * processMessage(msg); }
+			 */
+
+			idleManager = new IdleManager(session, es);
+			idleManager.watch(folder);
+			keepAlive.scheduleAtFixedRate(() -> keepAliveRunner(), KEEP_ALIVE_FREQ, KEEP_ALIVE_FREQ, TimeUnit.MINUTES);
+			logger.info(LOG_PREFIX + "Email notification service started successfully at {}", new Date());
+		} catch (Exception e) {
+			logger.error(LOG_PREFIX + "Email notification service failed to start", e);
+		}
+
 	}
 
 	@Override
 	public void send(Message message) {
-		Session session = getSession(emailServiceConfiguration.getProperty("smtp.host"),
+/*		
+ 		Session session = getSession(emailServiceConfiguration.getProperty("smtp.host"),
 				emailServiceConfiguration.getProperty("smtp.port"), emailServiceConfiguration.getProperty("username"),
 				emailServiceConfiguration.getProperty("password"), true);
 		String subjectPrefix = "";
@@ -255,175 +268,186 @@ public class EmailNotificationService implements NotificationService {
 		} catch (Exception e) {
 			throw new RuntimeException("Unable to send email", e);
 		}
-
+*/
 	}
 
 	@Override
 	public void stop() {
-        keepAlive.shutdownNow();
+		keepAlive.shutdownNow();
 
-        if (!this.executorServiceManaged) {
-            this.es.shutdownNow();
-        }
-        if (idleManager != null) {
-            idleManager.stop();
-            try {
-                folder.close(true);
-            } catch (MessagingException e) {
-                logger.error(LOG_PREFIX+"Error when slosing inbox folder", e);
-            }
-            try {
-                store.close();
-            } catch (MessagingException e) {
-                logger.error(LOG_PREFIX+"Error when slosing IMAP store", e);
-            }
-        }
+		if (!this.executorServiceManaged) {
+			this.es.shutdownNow();
+		}
+		if (idleManager != null) {
+			idleManager.stop();
+			try {
+				folder.close(true);
+			} catch (MessagingException e) {
+				logger.error(LOG_PREFIX + "Error when slosing inbox folder", e);
+			}
+			try {
+				store.close();
+			} catch (MessagingException e) {
+				logger.error(LOG_PREFIX + "Error when slosing IMAP store", e);
+			}
+		}
 
-        logger.info(LOG_PREFIX+"Email notification service stopped at {}", new Date());
+		logger.info(LOG_PREFIX + "Email notification service stopped at {}", new Date());
 	}
-	
-    protected Session getSession() {
-        try {
-            Session session = InitialContext.doLookup(emailServiceConfiguration.getProperty("mailSession"));
-            Properties props = session.getProperties();
-            props.put("mail.event.scope", "session");
-            props.put("mail.event.executor", es);
-            logger.debug(LOG_PREFIX+"Mail session taken from JNDI...");
-            return session;
-        } catch (NamingException e) {
-            Properties properties = System.getProperties();
-            properties.setProperty("mail.store.protocol", "imaps");
-            properties.setProperty("mail.imaps.usesocketchannels", "true");
-            properties.setProperty("mail.event.scope", "session");
-            properties.put("mail.event.executor", es);
 
-            Session session = Session.getInstance(properties, null);
-            logger.debug(LOG_PREFIX+"No mail session in JNDI, created manually...");
-            return session;
-        }
-    }
+	protected Session getSession() {
+		try {
+			Session session = InitialContext.doLookup(emailServiceConfiguration.getProperty("mailSession"));
+			Properties props = session.getProperties();
+			props.put("mail.event.scope", "session");
+			props.put("mail.event.executor", es);
+			logger.info(LOG_PREFIX + "Mail session taken from JNDI...");
+			return session;
+		} catch (NamingException e) {
+			Properties properties = System.getProperties();
+			properties.setProperty("mail.store.protocol", "imaps");
+			properties.setProperty("mail.imaps.usesocketchannels", "true");
+			properties.setProperty("mail.event.scope", "session");
+			properties.put("mail.event.executor", es);
 
-    protected Session getSession(String host, String port, String username, String password, boolean startTls) {
+			Session session = Session.getInstance(properties, null);
+			logger.info(LOG_PREFIX + "No mail session in JNDI, created manually...");
+			return session;
+		}
+	}
 
-        Session session = null;
-        try {
-            session = InitialContext.doLookup(emailServiceConfiguration.getProperty("mailSession"));
-        } catch (NamingException e1) {
+	protected Session getSession(String host, String port, String username, String password, boolean startTls) {
 
-            Properties properties = new Properties();
-            properties.setProperty("mail.smtp.host", host);
-            properties.setProperty("mail.smtp.port", port);
+		Session session = null;
+		try {
+			session = InitialContext.doLookup(emailServiceConfiguration.getProperty("mailSession"));
+		} catch (NamingException e1) {
 
-            if (startTls) {
-                properties.put("mail.smtp.starttls.enable", "true");
-            }
-            if (username != null) {
-                properties.setProperty("mail.smtp.submitter", username);
-                if (password != null) {
-                    Authenticator authenticator = new Authenticator(username, password);
-                    properties.setProperty("mail.smtp.auth", "true");
-                    session = Session.getInstance(properties, authenticator);
-                } else {
-                    session = Session.getInstance(properties);
-                }
-            } else {
-                session = Session.getInstance(properties);
-            }
+			Properties properties = new Properties();
+			properties.setProperty("mail.smtp.host", host);
+			properties.setProperty("mail.smtp.port", port);
 
-        }
+			if (startTls) {
+				properties.put("mail.smtp.starttls.enable", "true");
+			}
+			if (username != null) {
+				properties.setProperty("mail.smtp.submitter", username);
+				if (password != null) {
+					Authenticator authenticator = new Authenticator(username, password);
+					properties.setProperty("mail.smtp.auth", "true");
+					session = Session.getInstance(properties, authenticator);
+				} else {
+					session = Session.getInstance(properties);
+				}
+			} else {
+				session = Session.getInstance(properties);
+			}
 
-        return session;
-    }
-	
-    protected void parseAdditionalCallbacks() {
+		}
 
-        String additionalCallbacks = emailServiceConfiguration.getProperty("callbacks");
-        if (additionalCallbacks != null && !additionalCallbacks.isEmpty()) {
-            String[] callbackClasses = additionalCallbacks.split(",");
+		return session;
+	}
 
-            for (String callbackClass : callbackClasses) {
-                try {
-                    Class<?> clazz = Class.forName(callbackClass, true, this.getClass().getClassLoader());
+	protected void parseAdditionalCallbacks() {
 
-                    ReceivedMessageHandler instance = (ReceivedMessageHandler) clazz.newInstance();
-                    callbacks.add(instance);
-                } catch (Exception e) {
-                    logger.warn(LOG_PREFIX+"Unable to create instance of callback for class name {}", callbackClass, e);
-                }
-            }
-        }
-    }
+		String additionalCallbacks = emailServiceConfiguration.getProperty("callbacks");
+		if (additionalCallbacks != null && !additionalCallbacks.isEmpty()) {
+			String[] callbackClasses = additionalCallbacks.split(",");
 
-    protected void parseAdditionalMessageExtractors() {
+			for (String callbackClass : callbackClasses) {
+				try {
+					Class<?> clazz = Class.forName(callbackClass, true, this.getClass().getClassLoader());
 
-        String additionalExtractors = emailServiceConfiguration.getProperty("extractors");
-        if (additionalExtractors != null && !additionalExtractors.isEmpty()) {
-            String[] extractorsClasses = additionalExtractors.split(",");
+					ReceivedMessageHandler instance = (ReceivedMessageHandler) clazz.newInstance();
+					callbacks.add(instance);
+				} catch (Exception e) {
+					logger.warn(LOG_PREFIX + "Unable to create instance of callback for class name {}", callbackClass,
+							e);
+				}
+			}
+		}
+	}
 
-            for (String extractorsClass : extractorsClasses) {
-                try {
-                    Class<?> clazz = Class.forName(extractorsClass, true, this.getClass().getClassLoader());
+	protected void parseAdditionalMessageExtractors() {
 
-                    MessageExtractor instance = (MessageExtractor) clazz.newInstance();
-                    messageExtractors.add(instance);
-                } catch (Exception e) {
-                    logger.warn(LOG_PREFIX+"Unable to create instance of message extractor for class name {}", extractorsClass, e);
-                }
-            }
-        }
-    }
+		String additionalExtractors = emailServiceConfiguration.getProperty("extractors");
+		if (additionalExtractors != null && !additionalExtractors.isEmpty()) {
+			String[] extractorsClasses = additionalExtractors.split(",");
 
+			for (String extractorsClass : extractorsClasses) {
+				try {
+					Class<?> clazz = Class.forName(extractorsClass, true, this.getClass().getClassLoader());
+
+					MessageExtractor instance = (MessageExtractor) clazz.newInstance();
+					messageExtractors.add(instance);
+				} catch (Exception e) {
+					logger.warn(LOG_PREFIX + "Unable to create instance of message extractor for class name {}",
+							extractorsClass, e);
+				}
+			}
+		}
+	}
+
+	protected void sendCompleteSignal(javax.mail.Message message) {
+		logger.info(LOG_PREFIX + "sendCompleteSignal after got message: {}", message);
+	}
+
+	/*
+	 * Receive email from approver and signal the result
+	 */
 	protected void processMessage(javax.mail.Message message) {
+		logger.info(LOG_PREFIX + "Processing message: {}", message);
 		try {
 
 			MessageExtractor extractor = messageExtractors.stream().filter(me -> me.accept(message)).findFirst().get();
 
 			Message extracted = extractor.extract(message);
 			if (extracted == null) {
-				logger.info(LOG_PREFIX+"Message extraction returned no message");
+				logger.info(LOG_PREFIX + "Message extraction returned no message");
 				return;
 			}
 
-			logger.info(LOG_PREFIX+"Message received and exctracted {}", extracted);
+			logger.info(LOG_PREFIX + "Message received and exctracted {}", extracted);
 
 			for (ReceivedMessageHandler callback : callbacks) {
 				try {
 					callback.onMessage(extracted);
 				} catch (Exception e) {
-					logger.warn(LOG_PREFIX+"Error when invoking callback {} with error {}", callback, e.getMessage(), e);
+					logger.warn(LOG_PREFIX + "Error when invoking callback {} with error {}", callback, e.getMessage(),
+							e);
 				}
 			}
 		} catch (Exception ex) {
-			logger.error(LOG_PREFIX+"Unexpected error when processing received message {}", message, ex);
+			logger.error(LOG_PREFIX + "Unexpected error when processing received message {}", message, ex);
 		}
 	}
-	
-    public void keepAliveRunner() {
-        try {
-            logger.debug(LOG_PREFIX+"Sending NOOP command to keep it alive");
-            ((IMAPFolder) folder).doCommand(new IMAPFolder.ProtocolCommand() {
 
-                public Object doCommand(IMAPProtocol p) throws ProtocolException {
-                    p.simpleCommand("NOOP", null);
-                    return null;
-                }
-            });
-        } catch (MessagingException e) {
-            logger.warn(LOG_PREFIX+"Unable to send NOOP command", e);
-        }
-    }
+	public void keepAliveRunner() {
+		try {
+			logger.debug(LOG_PREFIX + "Sending NOOP command to keep it alive");
+			((IMAPFolder) folder).doCommand(new IMAPFolder.ProtocolCommand() {
 
-    private static class Authenticator extends javax.mail.Authenticator {
+				public Object doCommand(IMAPProtocol p) throws ProtocolException {
+					p.simpleCommand("NOOP", null);
+					return null;
+				}
+			});
+		} catch (MessagingException e) {
+			logger.warn(LOG_PREFIX + "Unable to send NOOP command", e);
+		}
+	}
 
-        private PasswordAuthentication authentication;
+	private static class Authenticator extends javax.mail.Authenticator {
 
-        public Authenticator(String username, String password) {
-            authentication = new PasswordAuthentication(username, password);
-        }
+		private PasswordAuthentication authentication;
 
-        protected PasswordAuthentication getPasswordAuthentication() {
-            return authentication;
-        }
-    }
+		public Authenticator(String username, String password) {
+			authentication = new PasswordAuthentication(username, password);
+		}
+
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return authentication;
+		}
+	}
 
 }

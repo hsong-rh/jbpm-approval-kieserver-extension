@@ -4,7 +4,11 @@ import java.util.List;
 import java.util.Map;
 
 public interface Message {
-	String getMessageId();
+	long getProcessInstanceId();
+	
+	String getSignalReference();
+	
+//	String getMessageId();
 	
 	String getTemplate();
 
@@ -20,5 +24,5 @@ public interface Message {
 	
 	Map<String, Object> getData();
 	
-	String getSourceMessageId();
+//	String getSourceMessageId();
 }
